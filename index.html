@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Chat Interface</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://unpkg.com/gsap@3.12.2/dist/gsap.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+        }
+
+        .dark .gradient-bg {
+            background: linear-gradient(120deg, #2a5298 0%, #1a365d 100%);
+        }
+
+        .chat-bubble {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .typing-indicator::after {
+            content: '...';
+            animation: typing 1s infinite;
+        }
+
+        @keyframes typing {
+            0% { content: '.'; }
+            33% { content: '..'; }
+            66% { content: '...'; }
+        }
+
+        .logo-spin {
+            animation: spin 10s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen transition-colors duration-300">
+    <div class="gradient-bg min-h-screen p-4 transition-all duration-300">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <header class="flex justify-between items-center mb-8 p-4 bg-white/90 dark:bg-gray-800 rounded-lg shadow-lg">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center logo-spin">
+                        <i class="bi bi-robot text-2xl text-white"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold dark:text-white">AI Resume Chat</h1>
+                </div>
+                <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <i class="bi bi-moon-stars text-xl dark:text-white"></i>
+                </button>
+            </header>
+
+            <!-- Chat Container -->
+            <div class="bg-white/90 dark:bg-gray-800 rounded-lg shadow-lg p-4 mb-4">
+                <div id="chatContainer" class="h-[60vh] overflow-y-auto mb-4 space-y-4 p-4">
+                    <!-- Messages will be inserted here -->
+                </div>
+
+                <!-- Input Area -->
+                <div class="flex gap-2">
+                    <input type="text" id="userInput" 
+                           class="flex-1 p-3 rounded-lg border dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                           placeholder="Ask about my skills, experience, or projects...">
+                    <button id="sendBtn" class="bg-blue-500 text-white px-6 rounded-lg hover:bg-blue-600 flex items-center gap-2">
+                        <i class="bi bi-send"></i>
+                        <span>Send</span>
+                    </button>
+                    <button id="voiceBtn" class="bg-green-500 text-white px-4 rounded-lg hover:bg-green-600">
+                        <i class="bi bi-mic"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Suggestion Chips -->
+            <div class="flex flex-wrap gap-2 mb-4">
+                <button class="suggestion-chip bg-blue-100 dark:bg-blue-900 px-4 py-2 rounded-full text-sm">
+                    Tell me about your skills
+                </button>
+                <button class="suggestion-chip bg-blue-100 dark:bg-blue-900 px-4 py-2 rounded-full text-sm">
+                    Work experience?
+                </button>
+                <button class="suggestion-chip bg-blue-100 dark:bg-blue-900 px-4 py-2 rounded-full text-sm">
+                    Show your projects
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Resume Data
+        const resumeData = {
+            skills: ["JavaScript", "React", "Node.js", "Python", "AWS", "UI/UX Design"],
+            experience: [
+                "Senior Developer at Tech Corp (2020-Present)",
+                "Full Stack Developer at StartUp Inc (2018-2020)",
+                "Junior Developer at Code Co (2016-2018)"
+            ],
+            projects: [
+                "E-commerce Platform with React",
+                "AI-powered Chat Application",
+                "Mobile Banking App"
+            ]
+        };
+
+        // Chat functionality
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const voiceBtn = document.getElementById('voiceBtn');
+        const themeToggle = document.getElementById('themeToggle');
+
+        // Theme Toggle
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            const icon = themeToggle.querySelector('i');
+            icon.classList.toggle('bi-moon-stars');
+            icon.classList.toggle('bi-sun');
+        });
+
+        // Message handling
+        function addMessage(text, isUser = false) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `chat-bubble flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`;
+            msgDiv.innerHTML = `
+                <div class="${isUser ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-white'} 
+                             rounded-lg p-3 max-w-[70%] shadow">
+                    ${text}
+                </div>
+            `;
+            chatContainer.appendChild(msgDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // Animate with GSAP
+            gsap.from(msgDiv, {
+                duration: 0.5,
+                y: 20,
+                opacity: 0,
+                ease: "power2.out"
+            });
+        }
+
+        function generateResponse(input) {
+            input = input.toLowerCase();
+            if (input.includes('skill')) {
+                return "Here are my skills: " + resumeData.skills.join(", ");
+            } else if (input.includes('experience')) {
+                return "My work experience includes: " + resumeData.experience.join(" | ");
+            } else if (input.includes('project')) {
+                return "I've worked on: " + resumeData.projects.join(" | ");
+            }
+            return "I can tell you about my skills, experience, or projects. What would you like to know?";
+        }
+
+        // Send message
+        function sendMessage() {
+            const text = userInput.value.trim();
+            if (text) {
+                addMessage(text, true);
+                userInput.value = '';
+                
+                // Simulate typing
+                setTimeout(() => {
+                    const response = generateResponse(text);
+                    addMessage(response);
+                    // Text-to-speech
+                    if ('speechSynthesis' in window) {
+                        const utterance = new SpeechSynthesisUtterance(response);
+                        window.speechSynthesis.speak(utterance);
+                    }
+                }, 1000);
+            }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Voice Input
+        voiceBtn.addEventListener('click', () => {
+            if ('webkitSpeechRecognition' in window) {
+                const recognition = new webkitSpeechRecognition();
+                recognition.start();
+                recognition.onresult = (event) => {
+                    userInput.value = event.results[0][0].transcript;
+                    sendMessage();
+                };
+            }
+        });
+
+        // Suggestion chips
+        document.querySelectorAll('.suggestion-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                userInput.value = chip.textContent;
+                sendMessage();
+            });
+        });
+
+        // Initial message
+        addMessage("Hi! I'm your AI Resume Assistant. Ask me anything about my skills, experience, or projects!");
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
